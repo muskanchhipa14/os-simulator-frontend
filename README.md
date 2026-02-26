@@ -1,70 +1,73 @@
-# Getting Started with Create React App
+🖥️ OS Simulator (Web-Based)
+📌 Overview
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This project is a web-based Operating System Simulator developed using React.
+It is designed to demonstrate core OS concepts through an interactive interface, helping users visualize how system-level processes behave internally.
 
-## Available Scripts
+The goal of this project is to bridge the gap between theoretical OS concepts and practical system behavior through structured simulation.
 
-In the project directory, you can run:
+🎯 Project Motivation
 
-### `npm start`
+Operating System concepts such as scheduling and process execution are often studied theoretically. This simulator aims to provide a visual and interactive representation of those concepts to enhance conceptual clarity.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+⚙️ Current Features
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+Interactive simulation interface
 
-### `npm test`
+Real-time process behavior visualization
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Modular component-based architecture
 
-### `npm run build`
+Clean and responsive UI
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+🛠️ Tech Stack
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+Frontend: React.js
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+State Management: React Hooks
 
-### `npm run eject`
+Styling: CSS
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+Version Control: Git & GitHub
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+🚀 Installation & Setup
+# Clone the repository
+git clone https://github.com/muskanchhipa14/os-simulator-frontend.git
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+# Navigate into the project
+cd os-simulator-frontend
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+# Install dependencies
+npm install
 
-## Learn More
+# Run the development server
+npm start
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+The application will run at:
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+http://localhost:3000
+📁 Project Structure
 
-### Code Splitting
+src/components – Modular UI components
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+src/pages – Feature-specific views
 
-### Analyzing the Bundle Size
+src/App.js – Core application structure
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+src/index.js – Entry point
 
-### Making a Progressive Web App
+📌 Future Enhancements
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+Process Scheduling Algorithms (FCFS, SJF, Round Robin)
 
-### Advanced Configuration
+Memory Management Simulation
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+Deadlock Detection Module
 
-### Deployment
+Performance Comparison Graphs
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+👩‍💻 Author
 
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+Muskan Chhipa
+B.Tech – Computer Science Engineering
+Focused on building structured, system-oriented software systems.
