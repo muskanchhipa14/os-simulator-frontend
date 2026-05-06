@@ -63,13 +63,13 @@ function App() {
     setError(null);
     setResult(null);
     
-    const endpoint = algorithm; 
+    const endpoint = `/${algorithm}`;
     const bodyData = algorithm === "round-robin"
       ? { processes, time_quantum: Number(timeQuantum) }
       : { processes };
 
     try {
-      const response = await fetch(`${API_URL}/${endpoint}`, {
+      const response = await fetch(`${API_URL}${endpoint}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(bodyData)
