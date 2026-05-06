@@ -1,17 +1,25 @@
 import React, { useState } from "react";
-// App.js (near the top, below imports)
-const API_URL = "https://os-simulator-backend.onrender.com"; // <-- replace with your deployed FastAPI URL
+import ProcessInputList from "./components/ProcessInputList";
+import GanttChart from "./components/GanttChart";
+import MetricsPanel from "./components/MetricsPanel";
+import { Play, Cpu, AlertTriangle, Info } from "lucide-react";
+
+const API_URL = "http://127.0.0.1:8000"; 
 
 function App() {
   const [processes, setProcesses] = useState([
-    { id: 1, arrival: 0, burst: 0 }
+    { id: 1, arrival: 0, burst: 5, priority: 2 },
+    { id: 2, arrival: 1, burst: 3, priority: 1 },
+    { id: 3, arrival: 2, burst: 8, priority: 3 }
   ]);
 
   const [algorithm, setAlgorithm] = useState("fcfs");
   const [timeQuantum, setTimeQuantum] = useState(2);
   const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const handleChange = (index, field, value) => {
+  const handleProcessChange = (index, field, value) => {
     const updated = [...processes];
     updated[index][field] = Number(value);
     setProcesses(updated);
@@ -20,277 +28,187 @@ function App() {
   const addProcess = () => {
     setProcesses([
       ...processes,
-      { id: processes.length + 1, arrival: 0, burst: 0 }
+      { id: processes.length + 1, arrival: 0, burst: 1, priority: 0 }
     ]);
   };
 
- const handleSubmit = async () => {
-  // keep endpoint simple
-  const endpoint =
-    algorithm === "fcfs"
-      ? "fcfs"
-      : algorithm === "sjf"
-      ? "sjf"
-      : algorithm === "srtf"
-      ? "srtf"
-      : "round-robin";  // no query param here
+  const removeProcess = (index) => {
+    const updated = processes.filter((_, i) => i !== index);
+    updated.forEach((p, i) => { p.id = i + 1; });
+    setProcesses(updated);
+  };
 
-  // only for Round Robin, include time_quantum in body
-  const bodyData =
-    algorithm === "round-robin"
+  // MOCK DATA FALLBACK IF BACKEND IS DOWN
+  const generateMockData = () => {
+    console.warn("Using mock data because backend is unreachable.");
+    return {
+      average_waiting_time: 3.33,
+      average_turnaround_time: 8.67,
+      average_response_time: 3.33,
+      cpu_utilization: 100.0,
+      throughput: 0.19,
+      total_time: 16,
+      per_process: processes.map(p => ({
+        id: p.id, arrival: p.arrival, burst: p.burst, priority: p.priority,
+        completion: p.arrival + p.burst + 3, waiting: 3, turnaround: p.burst + 3, response: 3
+      })),
+      gantt_chart: processes.map((p, i) => ({
+        process_id: p.id, start: i * 5, end: (i + 1) * 5
+      }))
+    };
+  };
+
+  const handleSubmit = async () => {
+    setLoading(true);
+    setError(null);
+    setResult(null);
+    
+    const endpoint = algorithm; 
+    const bodyData = algorithm === "round-robin"
       ? { processes, time_quantum: Number(timeQuantum) }
       : { processes };
 
-  const response = await fetch(`${API_URL}/${endpoint}`, {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(bodyData)
-});
+    try {
+      const response = await fetch(`${API_URL}/${endpoint}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(bodyData)
+      });
 
-  const data = await response.json();
-  setResult(data);
-};
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setResult(data);
+    } catch (err) {
+      console.error(err);
+      setError("Failed to connect to backend server. Using simulated offline results.");
+      // Provide an impactful fallback so the UI isn't broken
+      setTimeout(() => {
+        setResult(generateMockData());
+        setLoading(false);
+      }, 800);
+      return;
+    } 
+    setLoading(false);
+  };
 
   return (
-    <div style={styles.container}>
-      <h1 style={styles.title}>OS Scheduling Simulator</h1>
+    <div className="max-w-7xl mx-auto px-4 py-12 relative z-10">
+      
+      {/* Header */}
+      <header className="mb-12 text-center flex flex-col items-center">
+        <div className="inline-flex items-center justify-center p-3 bg-cyan-500/10 rounded-2xl mb-4 border border-cyan-500/20 shadow-[0_0_30px_rgba(6,182,212,0.2)]">
+          <Cpu size={40} className="text-cyan-400" />
+        </div>
+        <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight mb-4 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-fuchsia-500 drop-shadow-lg">
+          OS Scheduler Pro
+        </h1>
+        <p className="text-slate-400 max-w-2xl text-lg">
+          Advanced CPU Scheduling Visualization Engine. Configure your processes, select an algorithm, and analyze the metrics in real-time.
+        </p>
+      </header>
 
-      {/* PROCESS INPUT */}
-      <div style={styles.card}>
-        <h2>Processes</h2>
-
-        {processes.map((p, index) => (
-          <div key={index} style={styles.processRow}>
-            <span>P{index + 1}</span>
-            <input
-              type="number"
-              placeholder="Arrival"
-              style={styles.input}
-              onChange={(e) =>
-                handleChange(index, "arrival", e.target.value)
-              }
-            />
-            <input
-              type="number"
-              placeholder="Burst"
-              style={styles.input}
-              onChange={(e) =>
-                handleChange(index, "burst", e.target.value)
-              }
-            />
-          </div>
-        ))}
-
-        <button style={styles.addBtn} onClick={addProcess}>
-          + Add Process
-        </button>
-      </div>
-
-      {/* ALGORITHM SECTION */}
-      <div style={styles.card}>
-        <h2>Algorithm</h2>
-
-       <select
-  style={styles.select}
-  value={algorithm}
-  onChange={(e) => setAlgorithm(e.target.value)}
->
-  <option value="fcfs">FCFS</option>
-  <option value="sjf">SJF</option>
-  <option value="srtf">SRTF (Preemptive SJF)</option>
-  <option value="round-robin">Round Robin</option>
-</select>
-
-        {algorithm === "round-robin" && (
-          <input
-            type="number"
-            value={timeQuantum}
-            onChange={(e) => setTimeQuantum(e.target.value)}
-            style={styles.input}
-            placeholder="Time Quantum"
-          />
-        )}
-
-        <button style={styles.runBtn} onClick={handleSubmit}>
-          Run Simulation
-        </button>
-      </div>
-
-      {/* RESULTS SECTION */}
-      {result && (
-        <div style={styles.card}>
-          <h2>Results</h2>
-
-          {/* Metrics */}
-          <div style={styles.resultRow}>
-            <Metric title="Avg Waiting Time" value={result.average_waiting_time} />
-            <Metric title="Avg Turnaround Time" value={result.average_turnaround_time} />
-            <Metric title="Avg Response Time" value={result.average_response_time} />
-            <Metric title="CPU Utilization (%)" value={result.cpu_utilization} />
-            <Metric title="Throughput" value={result.throughput} />
-          </div>
-
-          {/* Gantt Chart */}
-          <h3>Gantt Chart</h3>
-          <div style={styles.ganttContainer}>
-            {result.gantt_chart.map((block, index) => (
-              <div
-                key={index}
-                style={{
-                  ...styles.ganttBlock,
-                  width: (block.end - block.start) * 40 + "px"
-                }}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        
+        {/* Left Column: Algorithm Config */}
+        <div className="lg:col-span-4 glass-panel p-6 flex flex-col gap-6 sticky top-8">
+          <div>
+            <label className="block text-sm font-semibold text-slate-300 mb-2 uppercase tracking-wide">
+              Select Algorithm
+            </label>
+            <div className="relative">
+              <select
+                value={algorithm}
+                onChange={(e) => setAlgorithm(e.target.value)}
+                className="input-field appearance-none cursor-pointer pr-10 bg-slate-900 border-slate-700 font-medium"
               >
-                <div>P{block.process_id}</div>
-                <div style={{ fontSize: "12px" }}>
-                  {block.start} - {block.end}
-                </div>
+                <option value="fcfs">First-Come, First-Served (FCFS)</option>
+                <option value="sjf">Shortest Job First (SJF)</option>
+                <option value="srtf">Shortest Remaining Time First (SRTF)</option>
+                <option value="round-robin">Round Robin (RR)</option>
+                <option value="priority-np">Priority (Non-Preemptive)</option>
+                <option value="priority-p">Priority (Preemptive)</option>
+                <option value="hrrn">Highest Response Ratio Next (HRRN)</option>
+                <option value="ljf">Longest Job First (LJF)</option>
+              </select>
+              <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-cyan-500">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
               </div>
-            ))}
+            </div>
           </div>
 
-          {/* Process Table */}
-          <h3>Process Details</h3>
-  <table style={styles.table}>
-  <thead>
-    <tr>
-  <th style={styles.th}>ID</th>
-  <th style={styles.th}>Arrival</th>
-  <th style={styles.th}>Burst</th>
-  <th style={styles.th}>Completion</th>
-  <th style={styles.th}>Waiting</th>
-  <th style={styles.th}>Turnaround</th>
-  <th style={styles.th}>Response</th>
-</tr>
-</thead>
+          {algorithm === "round-robin" && (
+            <div className="animate-in fade-in slide-in-from-top-4 duration-300">
+              <label className="block text-sm font-semibold text-slate-300 mb-2 uppercase tracking-wide">
+                Time Quantum
+              </label>
+              <input
+                type="number"
+                value={timeQuantum}
+                min="1"
+                onChange={(e) => setTimeQuantum(e.target.value)}
+                className="input-field bg-slate-900 border-slate-700 font-medium"
+              />
+            </div>
+          )}
 
-<tbody>
-  {result.per_process.map((p, index) => (
-    <tr key={index}>
-      <td style={styles.td}>P{p.id}</td>
-      <td style={styles.td}>{p.arrival}</td>
-      <td style={styles.td}>{p.burst}</td>
-      <td style={styles.td}>{p.completion}</td>
-      <td style={styles.td}>{p.waiting}</td>
-      <td style={styles.td}>{p.turnaround}</td>
-      <td style={styles.td}>{p.response}</td>
-    </tr>
-  ))}
-</tbody>
-  </table>
+          {error && (
+            <div className="flex items-start gap-3 p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-200 text-sm">
+              <AlertTriangle className="shrink-0 text-amber-500" size={18} />
+              <p>{error}</p>
+            </div>
+          )}
+          
+          <div className="flex items-start gap-3 p-4 bg-slate-800/50 border border-slate-700 rounded-xl text-slate-400 text-sm mt-auto">
+            <Info className="shrink-0 text-cyan-500" size={18} />
+            <p>Modify the processes on the right and run the simulation to see the generated Gantt Chart.</p>
+          </div>
+
+          <button 
+            className="btn-primary mt-2" 
+            onClick={handleSubmit} 
+            disabled={loading}
+          >
+            {loading ? (
+              <span className="flex items-center gap-2">
+                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Processing...
+              </span>
+            ) : (
+              <>
+                <Play size={20} fill="currentColor" />
+                Run Simulation
+              </>
+            )}
+          </button>
+        </div>
+
+        {/* Right Column: Process Input */}
+        <div className="lg:col-span-8">
+          <ProcessInputList 
+            processes={processes} 
+            onChange={handleProcessChange} 
+            onAdd={addProcess} 
+            onRemove={removeProcess}
+            algorithm={algorithm}
+          />
+        </div>
+      </div>
+
+      {/* Results Section */}
+      {result && (
+        <div className="animate-in fade-in slide-in-from-bottom-8 duration-700">
+          <MetricsPanel result={result} />
+          <GanttChart blocks={result.gantt_chart} />
         </div>
       )}
     </div>
   );
 }
-
-/* Metric Card Component */
-function Metric({ title, value }) {
-  return (
-    <div style={styles.metric}>
-      {title}
-      <div style={styles.metricValue}>{value}</div>
-    </div>
-  );
-}
-
-const styles = {
-  container: {
-    fontFamily: "Arial, sans-serif",
-    padding: "40px",
-    backgroundColor: "#f4f6f9",
-    minHeight: "100vh"
-  },
-  title: {
-    textAlign: "center",
-    marginBottom: "30px"
-  },
-  card: {
-    backgroundColor: "white",
-    padding: "20px",
-    borderRadius: "10px",
-    marginBottom: "20px",
-    boxShadow: "0 4px 10px rgba(0,0,0,0.1)"
-  },
-  processRow: {
-    display: "flex",
-    alignItems: "center",
-    gap: "10px",
-    marginBottom: "10px"
-  },
-  input: {
-    padding: "8px",
-    borderRadius: "5px",
-    border: "1px solid #ccc"
-  },
-  select: {
-    padding: "8px",
-    borderRadius: "5px",
-    marginBottom: "10px"
-  },
-  addBtn: {
-    padding: "8px 12px",
-    backgroundColor: "#4CAF50",
-    color: "white",
-    border: "none",
-    borderRadius: "5px",
-    cursor: "pointer"
-  },
-  runBtn: {
-    padding: "10px 15px",
-    backgroundColor: "#007BFF",
-    color: "white",
-    border: "none",
-    borderRadius: "5px",
-    cursor: "pointer",
-    marginTop: "10px"
-  },
-  resultRow: {
-    display: "flex",
-    flexWrap: "wrap",
-    gap: "20px",
-    marginBottom: "20px"
-  },
-  metric: {
-    backgroundColor: "#eef2ff",
-    padding: "15px",
-    borderRadius: "8px",
-    minWidth: "150px"
-  },
-  metricValue: {
-    fontSize: "18px",
-    fontWeight: "bold",
-    marginTop: "5px"
-  },
-  ganttContainer: {
-    display: "flex",
-    marginTop: "10px",
-    alignItems: "center"
-  },
-  ganttBlock: {
-    backgroundColor: "#87CEEB",
-    border: "1px solid #333",
-    padding: "15px",
-    textAlign: "center"
-  },
-  
-  table: {
-  width: "100%",
-  borderCollapse: "collapse",
-  marginTop: "15px"
-},
-th: {
-  border: "1px solid #ccc",
-  padding: "10px",
-  backgroundColor: "#f0f2f5",
-  fontWeight: "bold",
-  textAlign: "center"
-},
-td: {
-  border: "1px solid #ccc",
-  padding: "10px",
-  textAlign: "center"
-}
-};
 
 export default App;
