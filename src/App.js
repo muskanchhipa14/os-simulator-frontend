@@ -4,7 +4,7 @@ import GanttChart from "./components/GanttChart";
 import MetricsPanel from "./components/MetricsPanel";
 import { Play, Cpu, AlertTriangle, Info } from "lucide-react";
 
-const API_URL = "http://127.0.0.1:8000";
+const API_URL = "https://os-simulator-backend-1.onrender.com";
 
 function App() {
   const [processes, setProcesses] = useState([
