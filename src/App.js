@@ -4,7 +4,7 @@ import GanttChart from "./components/GanttChart";
 import MetricsPanel from "./components/MetricsPanel";
 import { Play, Cpu, AlertTriangle, Info } from "lucide-react";
 
-const API_URL = "https://os-simulator-backend.onrender.com/"; 
+const API_URL = "http://127.0.0.1:8000";
 
 function App() {
   const [processes, setProcesses] = useState([
@@ -62,7 +62,7 @@ function App() {
     setLoading(true);
     setError(null);
     setResult(null);
-    
+
     const endpoint = `/${algorithm}`;
     const bodyData = algorithm === "round-robin"
       ? { processes, time_quantum: Number(timeQuantum) }
@@ -76,9 +76,9 @@ function App() {
       });
 
       if (!response.ok) {
-        throw new Error(`Server error: ${response.status}`);
+        const errorText = await response.text();
+        throw new Error(errorText || `Server error: ${response.status}`);
       }
-
       const data = await response.json();
       setResult(data);
     } catch (err) {
@@ -90,13 +90,13 @@ function App() {
         setLoading(false);
       }, 800);
       return;
-    } 
+    }
     setLoading(false);
   };
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-12 relative z-10">
-      
+
       {/* Header */}
       <header className="mb-12 text-center flex flex-col items-center">
         <div className="inline-flex items-center justify-center p-3 bg-cyan-500/10 rounded-2xl mb-4 border border-cyan-500/20 shadow-[0_0_30px_rgba(6,182,212,0.2)]">
@@ -111,7 +111,7 @@ function App() {
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        
+
         {/* Left Column: Algorithm Config */}
         <div className="lg:col-span-4 glass-panel p-6 flex flex-col gap-6 sticky top-8">
           <div>
@@ -160,15 +160,15 @@ function App() {
               <p>{error}</p>
             </div>
           )}
-          
+
           <div className="flex items-start gap-3 p-4 bg-slate-800/50 border border-slate-700 rounded-xl text-slate-400 text-sm mt-auto">
             <Info className="shrink-0 text-cyan-500" size={18} />
             <p>Modify the processes on the right and run the simulation to see the generated Gantt Chart.</p>
           </div>
 
-          <button 
-            className="btn-primary mt-2" 
-            onClick={handleSubmit} 
+          <button
+            className="btn-primary mt-2"
+            onClick={handleSubmit}
             disabled={loading}
           >
             {loading ? (
@@ -190,10 +190,10 @@ function App() {
 
         {/* Right Column: Process Input */}
         <div className="lg:col-span-8">
-          <ProcessInputList 
-            processes={processes} 
-            onChange={handleProcessChange} 
-            onAdd={addProcess} 
+          <ProcessInputList
+            processes={processes}
+            onChange={handleProcessChange}
+            onAdd={addProcess}
             onRemove={removeProcess}
             algorithm={algorithm}
           />
